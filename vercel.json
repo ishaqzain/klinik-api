@@ -6,6 +6,6 @@
     },
     "rewrites": [
       { "source": "/favicon.ico", "destination": "https://juicy.vercel.app/favicon.ico" },
-      { "source": "/(.*)", "destination": "/public/index.php" }
+      { "source": "/(.*)", "destination": "/api/index.php" }
     ]
   }
