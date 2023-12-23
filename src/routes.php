@@ -225,7 +225,7 @@ return function (App $app) {
             );
         });
 
-        // GET a specific poli by ID
+        // GET a specific pasien by ID
         $app->get("/{id}", function (
             Request $request,
             Response $response,
@@ -255,7 +255,7 @@ return function (App $app) {
             );
         });
 
-        // POST a new poli
+        // POST a new pasien
         $app->post("/", function (Request $request, Response $response) {
             $new_pasien = $request->getParsedBody();
             $sql =
@@ -287,7 +287,7 @@ return function (App $app) {
             );
         });
 
-        // UPDATE a poli by ID
+        // UPDATE a pasien by ID
         $app->put("/{id}", function (
             Request $request,
             Response $response,
@@ -331,7 +331,7 @@ return function (App $app) {
             );
         });
 
-        // DELETE a poli by ID
+        // DELETE a pasien by ID
         $app->delete("/{id}", function (
             Request $request,
             Response $response,
@@ -368,10 +368,197 @@ return function (App $app) {
             );
         });
 
-        // Search poli by name
+        // Search pasien by name
         $app->get("/search/", function (Request $request, Response $response) {
             $keyword = $request->getQueryParam("keyword");
             $sql = "SELECT * FROM pasien WHERE nama LIKE '%$keyword%'";
+            $stmt = $this->db->prepare($sql);
+            $data = [":nama" => $keyword];
+            $stmt->execute($data);
+            $result = $stmt->fetchAll();
+            return $response->withJson(
+                ["status" => "success", "data" => $result],
+                200
+            );
+        });
+    });
+
+    // GROUP PEGAWAI
+    $app->group("/pegawai", function (App $app) {
+        // GET all pegawai
+        $app->get("/", function (Request $request, Response $response) {
+            $sql = "SELECT * FROM pegawai";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute();
+            $mainCount = $stmt->rowCount();
+            $result = $stmt->fetchAll();
+            if ($mainCount == 0) {
+                return $this->response->withJson(
+                    [
+                        "status" => "error",
+                        "message" => "no result data.",
+                    ],
+                    200
+                );
+            }
+            return $response->withJson(
+                [
+                    "status" => "success",
+                    "data" => $result,
+                ],
+                200
+            );
+        });
+
+        // GET a specific pegawai by ID
+        $app->get("/{id}", function (
+            Request $request,
+            Response $response,
+            $args
+        ) {
+            $id = $args["id"];
+            $sql = "SELECT * FROM pegawai WHERE id =:id";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([":id" => $id]);
+            $mainCount = $stmt->rowCount();
+            $result = $stmt->fetch();
+            if ($mainCount == 0) {
+                return $this->response->withJson(
+                    [
+                        "status" => "error",
+                        "message" => "no result data.",
+                    ],
+                    200
+                );
+            }
+            return $response->withJson(
+                [
+                    "status" => "success",
+                    "data" => $result,
+                ],
+                200
+            );
+        });
+
+        // POST a new pegawai
+        $app->post("/", function (Request $request, Response $response) {
+            $new_pegawai = $request->getParsedBody();
+            $sql =
+                "INSERT INTO pegawai (nip, nama, tanggal_lahir, nomor_telepon, email, password) VALUE (:nip, :nama, :tanggal_lahir, :nomor_telepon, :email, :password)";
+            $stmt = $this->db->prepare($sql);
+            $data = [
+                ":nip" => $new_pegawai["nip"],
+                ":nama" => $new_pegawai["nama"],
+                ":tanggal_lahir" => $new_pegawai["tanggal_lahir"],
+                ":nomor_telepon" => $new_pegawai["nomor_telepon"],
+                ":email" => $new_pegawai["email"],
+                ":password" => $new_pegawai["password"],
+            ];
+
+            if ($stmt->execute($data)) {
+                // get data last id
+                $id = $this->db->lastInsertId();
+                $sql = "SELECT * FROM pegawai WHERE id =:id";
+                $stmt = $this->db->prepare($sql);
+                $stmt->execute([":id" => $id]);
+                $result = $stmt->fetch();
+                return $response->withJson(
+                    ["status" => "success", "data" => $result],
+                    200
+                );
+            }
+            return $response->withJson(
+                ["status" => "failed", "data" => "error insert pegawai"],
+                200
+            );
+        });
+
+        // UPDATE a pegawai by ID
+        $app->put("/{id}", function (
+            Request $request,
+            Response $response,
+            $args
+        ) {
+            $id = $args["id"];
+            $new_pegawai = $request->getParsedBody();
+            $sql =
+                "UPDATE pasien SET nomor_rm=:nomor_rm, nama=:nama, tanggal_lahir=:tanggal_lahir, nomor_telepon=:nomor_telepon, alamat=:alamat WHERE id=:id";
+            $stmt = $this->db->prepare($sql);
+
+            $data = [
+                ":id" => $id,
+                ":nip" => $new_pegawai["nip"],
+                ":nama" => $new_pegawai["nama"],
+                ":tanggal_lahir" => $new_pegawai["tanggal_lahir"],
+                ":nomor_telepon" => $new_pegawai["nomor_telepon"],
+                ":email" => $new_pegawai["email"],
+                ":password" => $new_pegawai["password"],
+            ];
+            if ($stmt->execute($data)) {
+                // get response
+                $sql = "SELECT * FROM pegawai WHERE id =:id";
+                $stmt_r = $this->db->prepare($sql);
+                $stmt_r->execute([":id" => $id]);
+                $result = $stmt_r->fetch();
+                return $response->withJson(
+                    [
+                        "status" => "success",
+                        "data" => $result,
+                    ],
+                    200
+                );
+            }
+
+            return $response->withJson(
+                [
+                    "status" => "failed",
+                    "data" => "error Update Pegawai",
+                ],
+                200
+            );
+        });
+
+        // DELETE a pegawai by ID
+        $app->delete("/{id}", function (
+            Request $request,
+            Response $response,
+            $args
+        ) {
+            $id = $args["id"];
+            // cari data
+            $sql = "SELECT * FROM pegawai WHERE id =:id";
+            $get_stmt = $this->db->prepare($sql);
+            $get_stmt->execute([":id" => $id]);
+            $result = $get_stmt->fetch();
+
+            //hapus data
+            $sql = "DELETE FROM pegawai WHERE id=:id";
+            $stmt = $this->db->prepare($sql);
+            $data = [":id" => $id];
+
+            if ($stmt->execute($data)) {
+                return $response->withJson(
+                    [
+                        "status" => "success",
+                        "data" => $result,
+                    ],
+                    200
+                );
+            }
+
+            return $response->withJson(
+                [
+                    "status" => "failed",
+                    "data" => "error hapus pegawai",
+                ],
+                200
+            );
+        });
+
+        // Search pegawai by name
+        $app->get("/search/", function (Request $request, Response $response) {
+            $keyword = $request->getQueryParam("keyword");
+            $sql = "SELECT * FROM pegawai WHERE nama LIKE '%$keyword%'";
             $stmt = $this->db->prepare($sql);
             $data = [":nama" => $keyword];
             $stmt->execute($data);
