@@ -473,7 +473,7 @@ return function (App $app) {
             );
         });
 
-        // UPDATE a pegawai by ID
+        // UPDATE data pegawai by ID
         $app->put("/{id}", function (
             Request $request,
             Response $response,
@@ -482,7 +482,7 @@ return function (App $app) {
             $id = $args["id"];
             $new_pegawai = $request->getParsedBody();
             $sql =
-                "UPDATE pasien SET nomor_rm=:nomor_rm, nama=:nama, tanggal_lahir=:tanggal_lahir, nomor_telepon=:nomor_telepon, alamat=:alamat WHERE id=:id";
+                "UPDATE pegawai SET nip=:nip, nama=:nama, tanggal_lahir=:tanggal_lahir, nomor_telepon=:nomor_telepon, email=:email, password=:password WHERE id=:id";
             $stmt = $this->db->prepare($sql);
 
             $data = [
