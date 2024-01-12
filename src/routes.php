@@ -569,4 +569,185 @@ return function (App $app) {
             );
         });
     });
+
+    // GROUP OBAT
+    $app->group("/obat", function (App $app) {
+        // GET all obat
+        $app->get("/", function (Request $request, Response $response) {
+            $sql = "SELECT * FROM obat";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute();
+            $mainCount = $stmt->rowCount();
+            $result = $stmt->fetchAll();
+            if ($mainCount == 0) {
+                return $this->response->withJson(
+                    [
+                        "status" => "error",
+                        "message" => "no result data.",
+                    ],
+                    200
+                );
+            }
+            return $response->withJson(
+                [
+                    "status" => "success",
+                    "data" => $result,
+                ],
+                200
+            );
+        });
+
+        // GET a specific obat by ID
+        $app->get("/{id}", function (
+            Request $request,
+            Response $response,
+            $args
+        ) {
+            $id = $args["id"];
+            $sql = "SELECT * FROM obat WHERE id =:id";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([":id" => $id]);
+            $mainCount = $stmt->rowCount();
+            $result = $stmt->fetch();
+            if ($mainCount == 0) {
+                return $this->response->withJson(
+                    [
+                        "status" => "error",
+                        "message" => "no result data.",
+                    ],
+                    200
+                );
+            }
+            return $response->withJson(
+                [
+                    "status" => "success",
+                    "data" => $result,
+                ],
+                200
+            );
+        });
+
+        // POST a new obat
+        $app->post("/", function (Request $request, Response $response) {
+            $new_obat = $request->getParsedBody();
+            $sql =
+                "INSERT INTO obat (merek, harga, stock) VALUE (:merek, :harga, :stock)";
+            $stmt = $this->db->prepare($sql);
+            $data = [
+                ":merek" => $new_obat["merek"],
+                ":harga" => $new_obat["harga"],
+                ":stock" => $new_obat["stock"],
+            ];
+
+            if ($stmt->execute($data)) {
+                // get data last id
+                $id = $this->db->lastInsertId();
+                $sql = "SELECT * FROM obat WHERE id =:id";
+                $stmt = $this->db->prepare($sql);
+                $stmt->execute([":id" => $id]);
+                $result = $stmt->fetch();
+                return $response->withJson(
+                    ["status" => "success", "data" => $result],
+                    200
+                );
+            }
+            return $response->withJson(
+                ["status" => "failed", "data" => "error insert obat"],
+                200
+            );
+        });
+
+        // UPDATE a obat by ID
+        $app->put("/{id}", function (
+            Request $request,
+            Response $response,
+            $args
+        ) {
+            $id = $args["id"];
+            $new_obat = $request->getParsedBody();
+            $sql =
+                "UPDATE obat SET merek=:merek, harga=:harga, stock=:stock WHERE id=:id";
+            $stmt = $this->db->prepare($sql);
+
+            $data = [
+                ":id" => $id,
+                ":merek" => $new_obat["merek"],
+                ":harga" => $new_obat["harga"],
+                ":stock" => $new_obat["stock"],
+            ];
+            if ($stmt->execute($data)) {
+                // get response
+                $sql = "SELECT * FROM obat WHERE id =:id";
+                $stmt_r = $this->db->prepare($sql);
+                $stmt_r->execute([":id" => $id]);
+                $result = $stmt_r->fetch();
+                return $response->withJson(
+                    [
+                        "status" => "success",
+                        "data" => $result,
+                    ],
+                    200
+                );
+            }
+
+            return $response->withJson(
+                [
+                    "status" => "failed",
+                    "data" => "error Update Obat",
+                ],
+                200
+            );
+        });
+
+        // DELETE a obat by ID
+        $app->delete("/{id}", function (
+            Request $request,
+            Response $response,
+            $args
+        ) {
+            $id = $args["id"];
+            // cari data
+            $sql = "SELECT * FROM obat WHERE id =:id";
+            $get_stmt = $this->db->prepare($sql);
+            $get_stmt->execute([":id" => $id]);
+            $result = $get_stmt->fetch();
+
+            //hapus data
+            $sql = "DELETE FROM obat WHERE id=:id";
+            $stmt = $this->db->prepare($sql);
+            $data = [":id" => $id];
+
+            if ($stmt->execute($data)) {
+                return $response->withJson(
+                    [
+                        "status" => "success",
+                        "data" => $result,
+                    ],
+                    200
+                );
+            }
+
+            return $response->withJson(
+                [
+                    "status" => "failed",
+                    "data" => "error hapus obat",
+                ],
+                200
+            );
+        });
+
+        // Search obat by name
+        $app->get("/search/", function (Request $request, Response $response) {
+            $keyword = $request->getQueryParam("keyword");
+            $sql = "SELECT * FROM obat WHERE merek LIKE '%$keyword%'";
+            $stmt = $this->db->prepare($sql);
+            $data = [":merek" => $keyword];
+            $stmt->execute($data);
+            $result = $stmt->fetchAll();
+            return $response->withJson(
+                ["status" => "success", "data" => $result],
+                200
+            );
+        });
+    });
 };
